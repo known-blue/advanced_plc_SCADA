@@ -1,85 +1,56 @@
-from pymodbus.client import ModbusTcpClient
+from subprocess import run
 import time
 import json
 import requests
 from datetime import datetime
 
 
-class plc_tag():
-    def __init__(self, name, modbus_address, value):
-        self.name = name
-        self.modbus_address = modbus_address
-        self.value = value
+class Node():
+    def __init__(self, name, type, interface):
+        self.name = name # Name of the node
+        self.type = type # What type of node is it
+        self.interface_name = interface # The name of the interface
+        self.interface = self.get_interface(interface) # The details of the interface
+        self.info = self.get_info(name, type) # Other node information
+
+    def get_interface(name) -> str:
+        out = run(["ros2","interface","show",name], capture_output=True)
+        return out.stdout 
+
+    def get_info(node_name, type) -> str:
+        out = run(["ros2",type,"info",node_name], capture_output=True)
+        return out.stdout
 
 
-def connect_to_click_plc():
-    client = ModbusTcpClient('192.168.0.10', port="502")
-    client.connect()
-    return client
+def get_nodes_from_X_type(type) -> list: 
+    node_list = []
+    out = run(["ros2",type,"list","-t"], capture_output=True)
+    for node in out.stdout.split('\n'): # Split to get individual nodes and get this string: /node_name [node_type]
+        temp = node.split() # split to break up name from type
+        node_list.append(Node(temp[0],type,temp[1][1:-1])) #splice to remove []
+    return node_list
 
 
-def read_coils(client, coil_number, number_of_coils=1):
-    # Address the offset coil
-    coil_number = coil_number - 1
-    result = client.read_coils(coil_number, number_of_coils)
-    result_list = result.bits[0:number_of_coils]
-    return result_list
-
-
-def write_modbus_coil(client, coil_number, value):
-    coil_number = coil_number - 1
-    result = client.write_coils(coil_number, value)
-
-
-def close_connection_to_click(client):
-    client.close()
-
-
-def pulse_stepper(client, motor_pulse_control):
-
-    write_modbus_coil(client, motor_pulse_control.modbus_address, True)
-    time.sleep(0.01)
-    write_modbus_coil(client, motor_pulse_control.modbus_address, False)
-    time.sleep(0.01)
-
-
-def change_motor_direction(client, motor_direction_feedback, motor_direction_control):
-
-    motor_direction = read_coils(client, motor_direction_feedback.modbus_address, 1)
-    print("Changing motor direction")
-    motor_direction = motor_direction[0]
-    write_modbus_coil(client, motor_direction_control.modbus_address, not motor_direction)
-
-
-def write_to_json_file(file_name, data_dict):
-    with open(file_name, "w") as file:
-        json.dump(data_dict, file)
-
-
-def create_data_structure_for_cache(*args):
+def create_data_structure_for_cache(list) -> dict:
     # Creating tag dictionary
     # IE: {'In hand': True, "In auto": False}
 
     result_dict = {}
     # Iterate through unknown number of objects
-    for argument in args:
-        result_dict[argument.name] = argument.value
+    for node in list:
+        result_dict[node.name] = [node.type, node.interface_name, 
+                                  node.interface, node.info]
 
-    # Append a timestamp 
-    now = datetime.now()
-    result_dict["timestamp"] = now.strftime("%m/%d/%Y, %H:%M:%S")
-
-    # Result dict = {"In Hand": True, ...., "timestamp": "04/24/2024, 3:37:15"}
     return result_dict
 
 
-def send_data_to_webserver(data_dict, session):
+def send_data_to_webserver(data_dict, session) -> None:
     # Convert from python dict to JSON string
     # to be able to send to our django web server
     json_string = json.dumps(data_dict)
 
     # This is the site you are trying to send to
-    site_url = 'http://localhost:8000/receive-stepper-data/'
+    site_url = 'http://localhost:8000/receive-data/'
     # These are some headers for your browser, I wouldn't worry about these
     headers = {'User-Agent': 'Mozilla/5.0'}
 
@@ -92,62 +63,29 @@ def send_data_to_webserver(data_dict, session):
 
 
 def main():
-    tag_dict = {}
+    node_list = []
     
     # Create a session with our webserver to speed things up
     session = requests.Session()
 
-    # Create our click PLC connection object
-    click_plc_connection = connect_to_click_plc()
-
-    # Create our objects for each PLC tag
-    in_auto = plc_tag("In Auto", 16385, None)
-    in_hand = plc_tag("In Hand", 16386, None)
-    e_stop = plc_tag("E-Stop", 16387, None)
-    motor_pulse_feedback = plc_tag("Motor Pulse Feedback", 16388, None)
-    motor_direction_feedback = plc_tag("Motor Direction Feedback", 16389, None)
-    motor_pulse_control = plc_tag("Motor Pulse Control", 16390, None)
-    motor_direction_control = plc_tag("Motor Direction Control", 16391, None)
-
-    # Use this for changing stepper motor direction
-    count = 0
+    # Check for all nodes currently brodcasting
+    node_list.append(get_nodes_from_X_type('action'))
+    node_list.append(get_nodes_from_X_type('topic'))
+    node_list.append(get_nodes_from_X_type('service'))
 
     # Run forever
     while True:
-        # Read the selector switch and E-Stop coils
-        data = read_coils(click_plc_connection, in_auto.modbus_address, 7)
-        in_auto.value = data[0]
-        in_hand.value = data[1]
-        e_stop.value = data[2]
-        motor_pulse_feedback.value = data[3]
-        motor_direction_feedback.value = data[4]
-        motor_pulse_control.value = data[5]
-        motor_direction_control.value = data[6]
+        # setup tag dictionary with unlimited nodes
+        node_dict = create_data_structure_for_cache(node_list)
+        send_data_to_webserver(node_dict, session)
 
-        # Pulse the stepper motor
-        if in_auto.value is True and e_stop.value is False:
-            pulse_stepper(click_plc_connection, motor_pulse_control)
-            count += 1
-            if count == 200:
-                count = 0
-                change_motor_direction(click_plc_connection, motor_direction_feedback, motor_direction_control)
-
-        if in_hand.value is True and e_stop.value is False:
-            print("In hand")
-
-        # setup tag dictionary with unlimited arguments
-        tag_dict = create_data_structure_for_cache(
-                                            in_auto,
-                                            in_hand,
-                                            e_stop,
-                                            motor_pulse_feedback,
-                                            motor_direction_feedback,
-                                            motor_pulse_control,
-                                            motor_direction_control
-                                        )
-        send_data_to_webserver(tag_dict, session)
-
-    close_connection_to_click(click_plc_connection)
+        new_node_catcher = []
+        # Check for all nodes currently brodcasting and catch any new nodes
+        new_node_catcher.append(get_nodes_from_X_type('action'))
+        new_node_catcher.append(get_nodes_from_X_type('topic'))
+        new_node_catcher.append(get_nodes_from_X_type('service'))
+        # Set all nodes found into the old list to be sent next loop around
+        node_list = new_node_catcher
 
 
 if __name__ == '__main__':

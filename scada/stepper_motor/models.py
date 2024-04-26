@@ -1,9 +1,9 @@
 from django.db import models
 
-class StepperMotorDataPoint(models.Model):
-	# Tag Name
-	tag_name = models.CharField(max_length=256)
-	# Tag Value/ Status
-	tag_value = models.IntegerField()
-	# Timestamp
-	timestamp = models.DateTimeField()
+class NodeDataPoint(models.Model):
+	name = models.CharField(max_length=256)
+	type = models.CharField(max_length=256)
+	interface_name = models.CharField(max_length=256)
+	# No max length because these can be on the longer side
+	interface = models.CharField()
+	info = models.CharField()

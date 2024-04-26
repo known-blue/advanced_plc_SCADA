@@ -12,26 +12,16 @@
 <table class="table table-hover" id="main-table">
   <thead>
     <tr>
-      <th scope="col">Tag Name</th>
-      <th scope="col">Tag Value</th>
-      <th scope="col">Timestamp</th>
+      <th scope="col">Node Name</th>
+      <th scope="col">Type</th>
     </tr>
   </thead>
   <tbody>
     {% for reading in data %}
-        {% if reading.tag_name == "E-Stop" and reading.tag_value == 1 %}
-        <tr class="table-danger">
-          <td>{{reading.tag_name}}</td>
-          <td>{{reading.tag_value}}</td>
-          <td>{{reading.timestamp| date:'Y-m-d H:i:s A'}}</td>
-        </tr>
-        {% else %}
         <tr>
-          <td>{{reading.tag_name}}</td>
-          <td>{{reading.tag_value}}</td>
-          <td>{{reading.timestamp| date:'Y-m-d H:i:s A'}}</td>
+          <td>{{reading.name}}</td>
+          <td>{{reading.type}}</td>
         </tr>
-        {% endif %}
     {% endfor %}
   </tbody>
 </table>

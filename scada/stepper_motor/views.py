@@ -20,24 +20,11 @@ def control_mode(request):
 
 
 def data_table(request):
-    # This was our old way of doing things.
-    # It had issues as if we were writing to the cached JSON
-
-    '''
-    json_data_path = os.path.join(settings.BASE_DIR, "Extras/stepper_motor.json")
-    data = utils.read_json_file(json_data_path)
-    '''
-
-    # Get the latest timestamp out of the database 
-    latest_timestamp = models.StepperMotorDataPoint.objects.order_by('-timestamp').first()
-
-    recent_data_points = models.StepperMotorDataPoint.objects.filter(timestamp=latest_timestamp.timestamp)
-
     return render(
                     request,
                     "stepper_motor/data_table.html",
                     {
-                        'data': recent_data_points,
+                        'data': models.NodeDataPoint.objects,
                     }
     )
 
@@ -79,7 +66,7 @@ def graph(request):
 
 
 @csrf_exempt
-def receive_stepper_data(request):
+def receive_data(request):
     if request.method=='POST':
         # Take our received JSON data and load that into python dictionary
         data_dict =json.loads(request.body)

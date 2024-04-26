@@ -2,31 +2,25 @@ import json
 from stepper_motor import models
 from datetime import datetime
 
-def save_data(stepper_motor_dict):
-
-    # Pull out the timestamp and remove from dict
-	time_stamp = stepper_motor_dict['timestamp']
-    # YYYY-MM-DD HH:MM:ss
-	updated_timestamp = datetime.strptime(
-                                            time_stamp,
-                                            "%m/%d/%Y, %H:%M:%S"
-                                        )
-
-	del stepper_motor_dict['timestamp']
-
-	for key, value in stepper_motor_dict.items():
-		existing_data = models.StepperMotorDataPoint.objects.filter(
-    																tag_name=key,
-    																timestamp=updated_timestamp,
-    															)
+def save_data(node_dict):
+	for key, value in node_dict.items():
+		existing_data = models.NodeDataPoint.objects.filter(
+															name = key,
+															type = value[0],
+															interface_name = value[1],
+															interface = value[2],
+															info = value[3],
+														)
 		if existing_data.exists():
 			print("Data point already exists in DB")
 		else:
-			TempDataPoint = models.StepperMotorDataPoint(
-	                                                        tag_name=key,
-	                                                        tag_value=value,
-	                                                        timestamp=updated_timestamp,
-	                                                    )
+			TempDataPoint = models.NodeDataPoint(
+												name = key,
+												type = value[0],
+												interface_name = value[1],
+												interface = value[2],
+												info = value[3],
+											)
 			TempDataPoint.save()
 
 
