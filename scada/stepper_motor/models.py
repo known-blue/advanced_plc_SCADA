@@ -5,5 +5,5 @@ class NodeDataPoint(models.Model):
 	type = models.CharField(max_length=256)
 	interface_name = models.CharField(max_length=256)
 	# No max length because these can be on the longer side
-	interface = models.CharField()
-	info = models.CharField()
+	interface = models.CharField(max_length=2560)
+	info = models.CharField(max_length=2560)

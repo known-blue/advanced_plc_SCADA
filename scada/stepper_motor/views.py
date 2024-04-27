@@ -24,7 +24,7 @@ def data_table(request):
                     request,
                     "stepper_motor/data_table.html",
                     {
-                        'data': models.NodeDataPoint.objects,
+                        'data': models.NodeDataPoint.objects.values,
                     }
     )
 
