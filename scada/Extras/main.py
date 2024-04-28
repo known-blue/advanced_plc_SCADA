@@ -6,41 +6,42 @@ from datetime import datetime
 
 
 class Node():
-    def __init__(self, name, type, interface):
+    def __init__(self, name, Thetype, interface):
         self.name = name # Name of the node
-        self.type = type # What type of node is it
+        self.nodeType = Thetype # What type of node is it
         self.interface_name = interface # The name of the interface
         self.interface = self.get_interface(interface) # The details of the interface
-        self.info = self.get_info(name, type) # Other node information
+        self.info = self.get_info(name, Thetype) # Other node information
 
-    def get_interface(name) -> str:
-        out = run(["ros2","interface","show",name], capture_output=True)
+    def get_interface(self, name) -> str:
+        out = run(["ros2","interface","show",name], capture_output=True, text=True)
         return out.stdout 
 
-    def get_info(node_name, type) -> str:
-        out = run(["ros2",type,"info",node_name], capture_output=True)
+    def get_info(self, node_name, theType) -> str:
+        out = run(["ros2",theType,"info",node_name], capture_output=True, text=True)
         return out.stdout
 
 
-def get_nodes_from_X_type(type) -> list: 
+def get_nodes_from_X_type(theType) -> list: 
     node_list = []
-    out = run(["ros2",type,"list","-t"], capture_output=True)
-    for node in out.stdout.split('\n'): # Split to get individual nodes and get this string: /node_name [node_type]
+    out = run(["ros2",theType,"list","-t"], capture_output=True, text=True)
+    for node in out.stdout.split("\n"): # Split to get individual nodes and get this string: /node_name [node_type]
+        if not node: # If empty
+             break
         temp = node.split() # split to break up name from type
-        node_list.append(Node(temp[0],type,temp[1][1:-1])) #splice to remove []
+        node_list.append(Node(temp[0],theType,temp[1][1:-1])) #splice to remove []
     return node_list
 
 
-def create_data_structure_for_cache(list) -> dict:
+def create_data_structure_for_cache(thelist) -> dict:
     # Creating tag dictionary
     # IE: {'In hand': True, "In auto": False}
 
     result_dict = {}
     # Iterate through unknown number of objects
-    for node in list:
-        result_dict[node.name] = [node.type, node.interface_name, 
-                                  node.interface, node.info]
-
+    for node in thelist:
+        for i in range(0,len(node)):
+            result_dict[node[i].name] = [node[i].nodeType, node[i].interface_name, node[i].interface, node[i].info]
     return result_dict
 
 
