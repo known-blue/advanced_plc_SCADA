@@ -3,6 +3,9 @@ from stepper_motor import models
 from datetime import datetime
 
 def save_data(node_dict):
+	# Delete any nodes that aren't in the list anymore
+	models.NodeDataPoint.objects.exclude(name__in=node_dict.keys()).delete()
+	# Add in any new nodes
 	for key, value in node_dict.items():
 		existing_data = models.NodeDataPoint.objects.filter(
 															name = key,
@@ -12,7 +15,8 @@ def save_data(node_dict):
 															info = value[3],
 														)
 		if existing_data.exists():
-			print("Data point already exists in DB")
+			pass
+			#print("Data point already exists in DB")
 		else:
 			TempDataPoint = models.NodeDataPoint(
 												name = key,
@@ -22,7 +26,7 @@ def save_data(node_dict):
 												info = value[3],
 											)
 			TempDataPoint.save()
-
+	print("Table update done...")
 
 def read_json_file(filename):
 	with open(filename) as f:
