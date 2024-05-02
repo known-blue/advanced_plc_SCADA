@@ -6,6 +6,8 @@ def save_data(node_dict):
 	# Delete any nodes that aren't in the list anymore
 	models.NodeDataPoint.objects.exclude(name__in=node_dict.keys()).delete()
 	# Add in any new nodes
+	# WIP: Check the dict before sending it to webserver to see if there's any new info to add or remove
+	# This would limit the number of messages coming to the server and would simplify this sides code.
 	for key, value in node_dict.items():
 		existing_data = models.NodeDataPoint.objects.filter(
 															name = key,
