@@ -2,7 +2,7 @@
 
 {% block page_styles %}{% endblock %}
 
-{% block page_name %}Stepper Motor Data Table{% endblock %}
+{% block page_name %}Node List{% endblock %}
 
 {% block page_buttons %}{% endblock %}
 
@@ -20,7 +20,7 @@
     {% for reading in data %}
         <tr>
           <td><input type=submit name={{reading.name}} value={{reading.name}}
-            onclick="location.href='{% url 'node-details' %}'"></td>
+            onclick="location.href='{% url 'node-details' forloop.counter %}'"></td>
           <td>{{reading.type}}</td>
         </tr>
     {% endfor %}

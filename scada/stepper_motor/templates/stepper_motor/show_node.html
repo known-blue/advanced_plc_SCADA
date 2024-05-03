@@ -2,10 +2,52 @@
 
 {% block page_styles %}{% endblock %}
 
-{% block page_name %}Stepper Motor Data Table{% endblock %}
+{% block page_name %}Node Details{% endblock %}
 
 {% block page_buttons %}{% endblock %}
 
 {% block content %}
 
-<h1>SHOWING NODE</h1>
+<table class="table table-hover" id="main-table">
+    {% for reading in data %}
+        {% if forloop.counter == count %}
+            <tbody>
+                <tr>
+                    <th>Node Name</th>
+                    <td>{{reading.name}}</td>
+                </tr>
+                <tr>
+                    <th>Type</th>
+                    <td>{{reading.type}}</td>
+                </tr>
+                <tr>
+                    <th>Interface</th>
+                    <td>{{reading.interface_name}}</td>
+                </tr>
+                <tr>
+                    <th>Interface Info</th>
+                    <td><pre>{{reading.interface}}</pre></td>
+                </tr>
+                <tr>
+                    <th>Info</th>
+                    <td><pre>{{reading.info}}</pre></td>
+                </tr>
+            
+            </tbody>
+        {% endif %}
+    {% endfor %}
+  </table>
+  {% endblock %}
+  
+  {% block page_scripts %}
+  <script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js'></script>
+    <script type="text/javascript">
+    $( document ).ready(function() {
+              setInterval(function(){
+                  // Reload the table of values
+                  $("#main-table").load(" #main-table");
+              }, 2000);
+      });
+    </script>
+
+{% endblock %}
