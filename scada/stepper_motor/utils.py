@@ -13,6 +13,7 @@ def save_data(node_dict):
 															interface_name = value[1],
 															interface = value[2],
 															info = value[3],
+															data = value[4]
 														)
 		if not existing_data.exists():
 			TempDataPoint = models.NodeDataPoint(
@@ -21,6 +22,7 @@ def save_data(node_dict):
 												interface_name = value[1],
 												interface = value[2],
 												info = value[3],
+												data = value[4]
 											)
 			TempDataPoint.save()
 	print("Table update done...")

@@ -20,6 +20,12 @@
                     <th>Type</th>
                     <td>{{reading.type}}</td>
                 </tr>
+                {% if reading.type == 'topic'%}
+                    <tr>
+                        <th>Current value</th>
+                        <td>{{reading.data}}</td>
+                    </tr>
+                {% endif %}
                 <tr>
                     <th>Interface</th>
                     <td>{{reading.interface_name}}</td>
