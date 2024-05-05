@@ -7,14 +7,7 @@ def save_data(node_dict):
 	models.NodeDataPoint.objects.exclude(name__in=node_dict.keys()).delete()
 	# Add in any new nodes
 	for key, value in node_dict.items():
-		existing_data = models.NodeDataPoint.objects.filter(
-															name = key,
-															type = value[0],
-															interface_name = value[1],
-															interface = value[2],
-															info = value[3],
-															data = value[4]
-														)
+		existing_data = models.NodeDataPoint.objects.filter(name = key)
 		if not existing_data.exists():
 			TempDataPoint = models.NodeDataPoint(
 												name = key,

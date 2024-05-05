@@ -14,7 +14,12 @@ class Node():
         self.info = self.get_info(name, Thetype) # Other node information
         self.curData = ''
         if Thetype == 'topic':
-            self.curData = self.get_topic(name)
+            if name == '/rosout' or name == '/parameter_events':
+                # These are 2 of ROS's topics, they don't give out messages frequently 
+                # Plus they aren't usually very important for us lol
+                pass
+            else:
+                self.curData = self.get_topic(name)
 
     def get_interface(self, name) -> str:
         out = run(["ros2","interface","show",name], capture_output=True, text=True)
@@ -76,8 +81,11 @@ def main(session):
     node_list = []
 
     # Check for all nodes currently brodcasting
+    print("Getting actions....")
     node_list.append(get_nodes_from_X_type('action'))
+    print("Getting topics....")
     node_list.append(get_nodes_from_X_type('topic'))
+    print("Getting services....")
     node_list.append(get_nodes_from_X_type('service'))
 
     # Run forever
@@ -88,8 +96,11 @@ def main(session):
 
         new_node_catcher = []
         # Check for all nodes currently brodcasting and catch any new nodes
+        print("Getting actions....")
         new_node_catcher.append(get_nodes_from_X_type('action'))
+        print("Getting topics....")
         new_node_catcher.append(get_nodes_from_X_type('topic'))
+        print("Getting services....")
         new_node_catcher.append(get_nodes_from_X_type('service'))
         # Set all nodes found into the old list to be sent next loop around
         node_list = new_node_catcher
@@ -102,5 +113,5 @@ if __name__ == '__main__':
         main(session)
     except KeyboardInterrupt:
         # Send a blank to reset all data
-        node_dict = {'blank':['','','','']}
+        node_dict = {'blank':['','','','','']}
         send_data_to_webserver(node_dict, session)
